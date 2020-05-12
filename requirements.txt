@@ -1,0 +1,5 @@
+azure-cosmos
+datetime
+python-dateutil
+pandas
+requests
