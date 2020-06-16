@@ -34,14 +34,15 @@ def main():
 
     uuids_list = get_netcraft_uuids_from_cosmos()
 
-    print ("**** UUID List ****")
-    for uuid in uuids_list:
-        print (uuid)   
+    print ("Number if UUIDs: " + str(len(uuids_list)))
+
+    #print ("**** UUID List ****")
+    #for uuid in uuids_list:
+    #    print (uuid)   
  
     if len(uuids_list) != 0:
         netcraft_characterization_results_json = check_URLs_state_netcraft_by_UUID(uuids_list)
-    
-    sort_netcraft_results(netcraft_characterization_results_json) 
+        sort_netcraft_results(netcraft_characterization_results_json) 
 
 ##########################################################################
 #
@@ -55,7 +56,7 @@ def main():
 #
 ##########################################################################
 def sort_netcraft_results(netcraft_characterization_results):
-    print ("***** Sort Netcraft Characterization Results *****\n")
+    print ("\n***** Sort Netcraft Characterization Results *****\n")
 
     # keys by value: 
     #      - processing
@@ -211,13 +212,6 @@ def get_netcraft_uuids_from_cosmos():
 
     client = CosmosClient(uri, {'masterKey': key})
 
-    date_str = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-    current_date = datetime.now()
-    date_yesterday = current_date - timedelta(days=1)
-
-    #print('Today: ' + current_date.strftime('%Y-%m-%d %H:%M:%S'))
-    #print('Yesterday: ' + date_yesterday.strftime('%Y-%m-%d %H:%M:%S'))
-
     print ("Query db for UUIDs since yesterday\n")
 
     yesterday  = int((datetime.utcnow() - relativedelta(days=1)).timestamp())
@@ -237,7 +231,7 @@ def get_netcraft_uuids_from_cosmos():
 
 ##########################################################################
 #
-# Function name: check_URLs_state_netcraft_bulk
+# Function name: check_URLs_state_netcraft_by_UUID
 # Input: uuid returned from Netcraft submission,
 #
 # Output:
@@ -260,6 +254,8 @@ def check_URLs_state_netcraft_by_UUID(uuid_list):
     print("\n***** Query Netcraft for URL classification by UUID *****\n")
 
     URL_characterization_results = {}
+    n_repeats = 0
+    n_results_ret = 0
 
     for uuid in uuid_list:
         #uuid = json.dumps(result, indent=True).strip('\"')  
@@ -274,7 +270,7 @@ def check_URLs_state_netcraft_by_UUID(uuid_list):
 
         # Check URLs with netcraft service
         headers = {'Content-type': 'application/json'}
-        request_data = {};
+        request_data = {"count": 200} #, "url state": 'phishing'}
 
         # Check URLs with netcraft service
         r_get = requests.get(netcraftSubmissionCheck_url, json=request_data, headers=headers)
@@ -290,15 +286,40 @@ def check_URLs_state_netcraft_by_UUID(uuid_list):
                 print("Results for uuid:", str(uuid), " available.")
                 # Get results
                 for entry in r_get.json()['urls']:
-#                    print(entry)
+                    print(entry)
+
+                    n_results_ret += 1
+
                     url = entry['url']
                     url_state = entry['url_state']
-                    
-                    URL_characterization_results[url]={'characterization':url_state}
+                   
+                    # check to see if URL has already been reported
+                    # processing
+                    # no threats
+                    # unavailable
+                    # phishing
+                    # already blocked
+                    # suspicious
+                    # malware
+                    # rejected 
+                    if url in URL_characterization_results.keys():
+                        #repeat entry
+                        n_repeats += 1
 
-    print ("**** URL Characterization Results from Netcraft ****")
-    for k,v in URL_characterization_results.items():
-        print (k,v)
+                        # do not overwrite the state if it is one of: phishing, suspicious, malware, or already blocked
+                        if URL_characterization_results[url]['characterization'] not in ['phishing', 'suspicious', 'malware', 'already blocked']:
+                            URL_characterization_results[url]={'characterization':url_state}                           
+                    else: 
+                        URL_characterization_results[url]={'characterization':url_state}
+
+    #print ("**** URL Characterization Results from Netcraft ****")
+    #for k,v in URL_characterization_results.items():
+    #    print (k,v)
+
+    print ("Number of results returned: " + str(n_results_ret))
+    print ("Number of keys: " + str(len(URL_characterization_results)))
+    print ("Number of repeated URLs reported: " + str(n_repeats))
+
 
     return URL_characterization_results
 
