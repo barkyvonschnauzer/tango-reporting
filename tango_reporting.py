@@ -29,7 +29,7 @@ def main():
 
     print ("***** Retrieve state information for each URL submitted to Netcraft *****")
 
-    netcraft_characterizatin_results_json = {}
+    netcraft_characterization_results_json = {}
     uuids_list = []
 
     uuids_list = get_netcraft_uuids_from_cosmos()
@@ -41,8 +41,8 @@ def main():
     #    print (uuid)   
  
     if len(uuids_list) != 0:
-        netcraft_characterization_results_json = check_URLs_state_netcraft_by_UUID(uuids_list)
-        sort_netcraft_results(netcraft_characterization_results_json) 
+        netcraft_characterization_results_json, n_repeats = check_URLs_state_netcraft_by_UUID(uuids_list)
+        sort_netcraft_results(netcraft_characterization_results_json, n_repeats) 
 
 ##########################################################################
 #
@@ -55,7 +55,7 @@ def main():
 #          
 #
 ##########################################################################
-def sort_netcraft_results(netcraft_characterization_results):
+def sort_netcraft_results(netcraft_characterization_results, n_repeats):
     print ("\n***** Sort Netcraft Characterization Results *****\n")
 
     # keys by value: 
@@ -164,6 +164,7 @@ def sort_netcraft_results(netcraft_characterization_results):
     print ("unavailable: " + all_unavailable_str)
     print ("n_rejected: " + str(len(rejected)))
     print ("rejected: " + all_rejected_str)
+    print ("n_repeats: " + str(n_repeats))
 
     container.upsert_item( { 'id': id_date_str,
                              'date_time': id_date_str,
@@ -183,7 +184,8 @@ def sort_netcraft_results(netcraft_characterization_results):
                              'n_unavailable': str(len(unavailable)),
                              'unavailable': all_unavailable_str,
                              'n_rejected': str(len(rejected)),
-                             'rejected': all_rejected_str })
+                             'rejected': all_rejected_str,
+                             'n_repeats': n_repeats })
 
 
 
@@ -270,7 +272,7 @@ def check_URLs_state_netcraft_by_UUID(uuid_list):
 
         # Check URLs with netcraft service
         headers = {'Content-type': 'application/json'}
-        request_data = {"count": 200} #, "url state": 'phishing'}
+        request_data = {'count': 200} #, "url state": 'phishing'}
 
         # Check URLs with netcraft service
         r_get = requests.get(netcraftSubmissionCheck_url, json=request_data, headers=headers)
@@ -321,7 +323,7 @@ def check_URLs_state_netcraft_by_UUID(uuid_list):
     print ("Number of repeated URLs reported: " + str(n_repeats))
 
 
-    return URL_characterization_results
+    return URL_characterization_results, n_repeats
 
 
 
