@@ -195,7 +195,8 @@ def sort_netcraft_results(netcraft_characterization_results, n_repeats):
 # Input: 
 # Output: 
 #
-# Purpose: Connect to the COSMOS DB.
+# Purpose: Connect to the COSMOS DB tango-uuid container and pull the
+#          uuids for the past 24 hours.
 #
 ##########################################################################
 def get_netcraft_uuids_from_cosmos():
